@@ -20,22 +20,18 @@ problema: funcionTrans restriccion restricionVariable RESOLVER SALTOLINEA # prob
 
 restricionVariable : CON DOSPUNTOS SALTOLINEA (desigualdadVariable SALTOLINEA)+ #restriccionesVariables ;
 
-desigualdadVariable : variable tipo=(MENOR | MAYOR) expMatDesigualdad # desigualdadesVariables
-                    | variable mayorIgual expMatDesigualdad # desigualdadesVariablesMayorIgual
-                    | variable menorIgual expMatDesigualdad # desigualdadesVariablesMenorIgual
+desigualdadVariable : variable tipo=(MENOR | MAYOR | IGUAL) expMAT # desigualdadesVariables
+                    | variable mayorIgual expMAT # desigualdadesVariablesMayorIgual
+                    | variable menorIgual expMAT # desigualdadesVariablesMenorIgual
                     ;
 
 restriccion : RESTRICCIONES DOSPUNTOS SALTOLINEA (desigualdad SALTOLINEA)+ #restricciones;
 
-desigualdad: polinomio tipo=(MENOR | MAYOR) expMatDesigualdad # desigualdades
-           | polinomio mayorIgual expMatDesigualdad # desigualdadesMayorIgual
-           | polinomio menorIgual expMatDesigualdad # desigualdadesMenorIgual
+desigualdad: polinomio tipo=(MENOR | MAYOR | IGUAL) expMAT # desigualdades
+           | polinomio mayorIgual expMAT # desigualdadesMayorIgual
+           | polinomio menorIgual expMAT # desigualdadesMenorIgual
            ;
 
-expMatDesigualdad: PARABIERTO expMAT PARCERRADO # expresionesMatDesigualdad
-                 | decimal # decimalesDesigualdades
-                 | entero # enterosDesigualdades
-                 ;
 
 funcionTrans: operacion = (MAXI | MINI) DOSPUNTOS SALTOLINEA funcion SALTOLINEA #funcionTransf;
 
@@ -49,7 +45,7 @@ polinomio : monomio monomioAdd+ # polinomios
           ;
 
 monomioAdd: MAS monomio # masMonomio
-          | MENOS monomio #menosMonomio
+          | MENOS monomio # menosMonomio
           ;
 
 monomio : e = numero variable # monomioMinimo
@@ -67,7 +63,7 @@ expMAT: expMAT POTENCIA expMAT # operPotencia
       | MENOS expMAT # menosExpMAT
       ;
 // Variables para expresiones lineales
-variable : LETRA+;
+variable : LETRA+ # variables;
 
 // Identificadores de variables de usoa en el programa
 identificador : LETRA (LETRA | DIGITO | '_')*;
@@ -76,7 +72,7 @@ identificador : LETRA (LETRA | DIGITO | '_')*;
 numero : PARABIERTO expMAT PARCERRADO # expresionMatematica
        | decimal # decimalesPol
        | entero # numerosPol
-       | #noNumero
+       | # noNumero
        ;
 
 // Expresiones numericas

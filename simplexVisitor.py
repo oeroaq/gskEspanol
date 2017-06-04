@@ -89,21 +89,6 @@ class simplexVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by simplexParser#expresionesMatDesigualdad.
-    def visitExpresionesMatDesigualdad(self, ctx:simplexParser.ExpresionesMatDesigualdadContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by simplexParser#decimalesDesigualdades.
-    def visitDecimalesDesigualdades(self, ctx:simplexParser.DecimalesDesigualdadesContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by simplexParser#enterosDesigualdades.
-    def visitEnterosDesigualdades(self, ctx:simplexParser.EnterosDesigualdadesContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by simplexParser#funcionTransf.
     def visitFuncionTransf(self, ctx:simplexParser.FuncionTransfContext):
         return self.visitChildren(ctx)
@@ -189,8 +174,8 @@ class simplexVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by simplexParser#variable.
-    def visitVariable(self, ctx:simplexParser.VariableContext):
+    # Visit a parse tree produced by simplexParser#variables.
+    def visitVariables(self, ctx:simplexParser.VariablesContext):
         return self.visitChildren(ctx)
 
 
