@@ -15,7 +15,6 @@ class simplexExpand(simplexVisitor):
         self.Variables = []
 
     def resetSelf(self):
-        self.memory = {}
         self.RCount = 0
         self.SCount = 0
         self.CVariables = []
@@ -94,8 +93,10 @@ class simplexExpand(simplexVisitor):
         
         print("Funcion:\n\tfuncion (%s) = %s\n"% (", ".join(self.Variables), variables["0Z"][0]))
         print("Vaiables:")
+        self.memory["fun"] = variables["0Z"][0]
         for item in self.Variables:
             if item != "0Z":
+                self.memory[item] = variables[item]
                 print("\tVariable %s = %s"% (item, variables[item]))
         '''for item in self.R:
             print(self.R[item])'''
@@ -159,8 +160,7 @@ class simplexExpand(simplexVisitor):
                 return izquierda * derecha
             if derecha != 0 and str(derecha) != "0":
                 return izquierda / derecha
-        print("Error:\n\tLa evaluacion de la expresion: '%s' no se puede calcular." % (
-            ctx.expMAT(0).getText(), ctx.expMAT(1).getText()))
+        print("Error:\n\tLa evaluacion de la expresion: '%s/%s' no se puede calcular." % (ctx.expMAT(0).getText(), ctx.expMAT(1).getText()))
         return None
 
     def visitOperSuma(self, ctx):

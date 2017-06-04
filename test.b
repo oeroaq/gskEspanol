@@ -1,26 +1,38 @@
-
+a = 12
+z= 12**2
+c = 0.00001
+imprimir(a / z )
 min:
-    fun (a,b,c)= -5a-4b
+    fun (a,b,c)= -(2**2)a-4b+ 10.01 + (c)
 restringir:
-    2a+2b <= 1
+    2a+2b +10 <= 15.00001
     6a+3b <= 1
-    5a+10b <= 1
+    5a+10b <= 10
 con:
     a >= 0
     b >= 0
     c >= 0
 res
+
 
 max:
-    fun (a,b,c)= 2a+3b-5c
+    fun (n,b,c)= 2n+3b-(5/(a-z))c
 restringir:
-    a+b+c = 7
-    2a-5b+c >= 10
+    n+b+c = 7
+    2n-5b+c >= 10
 con:
-    a >= 0
+    n >= 0
     b >= 0
     c >= 0
 res
+
+imp(a)
+imp(n)
+imp(b)
+imp(c)
+imp(fun)
+
+
 
 maximizar:
     fun (a,b,c)= 315a+110b+50c
