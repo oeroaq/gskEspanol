@@ -44,6 +44,11 @@ class simplexVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by simplexParser#comentarios.
+    def visitComentarios(self, ctx:simplexParser.ComentariosContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by simplexParser#problemas.
     def visitProblemas(self, ctx:simplexParser.ProblemasContext):
         return self.visitChildren(ctx)

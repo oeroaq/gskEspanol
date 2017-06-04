@@ -13,6 +13,7 @@ expresion : identificador IGUAL expMAT # asignar
           | IMPRIMIR PARABIERTO expresion PARCERRADO # imprimirExpr
           | SALTOLINEA # saltar
           | problema # problemasExpresados
+          | COMENTARIO # comentarios
           ;
 
 // Definicion de problema para solucion con el metodo simplex
@@ -40,8 +41,8 @@ funcion : funcionDef IGUAL polinomio # funciones;
 funcionDef: FUNCION PARABIERTO variable (COMA variable)* PARCERRADO # definirFuncion
           ;
 
-polinomio : monomio monomioAdd+ # polinomios
-          | monomio # monPolinomios
+polinomio : MENOS? monomio monomioAdd+ # polinomios
+          | MENOS? monomio # monPolinomios
           ;
 
 monomioAdd: MAS monomio # masMonomio
