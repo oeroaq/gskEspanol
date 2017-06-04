@@ -26,13 +26,16 @@ class simplexExpand(simplexVisitor):
         nombre = ctx.identificador().getText()
         if nombre in self.memory:
             return self.memory[nombre]
+        print("Error:\n\tLa variable '%s' no esta definida" % nombre)
         return None
 
     def visitAsignar(self, ctx):
         nombre = ctx.identificador().getText()
         valor = self.visit(ctx.expMAT())
-        self.memory[nombre] = valor
-        return valor
+        if valor:
+            self.memory[nombre] = valor
+            return valor
+        print("Error:\n\tNo se pudo inicializar la variable '%s'." % nombre)
 
     def visitNumeros(self, ctx):
         return int(ctx.entero().getText())
@@ -43,25 +46,29 @@ class simplexExpand(simplexVisitor):
     def visitOperMult(self, ctx):
         izquierda = self.visit(ctx.expMAT(0))
         derecha = self.visit(ctx.expMAT(1))
-        if ctx.operador.type == simplexParser.MULT:
-            return izquierda * derecha
-        if derecha != 0:
-            return izquierda / derecha
-        else:
+        if derecha and izquierda:
+            if ctx.operador.type == simplexParser.MULT:
+                return izquierda * derecha
+            if derecha != 0:
+                return izquierda / derecha
             var = ctx.expMAT(1).getText()
             mensaje = ""
-            if str(var) == "0":
-                mensaje = "No se puede dividir por cero."
+            if str(var) != "0":
+                mensaje = "Error: \n\tNo se puede dividir por cero."
             else:
-                mensaje = "La evaluacion de la expresion o variable '%s' no puede ser cero." % var
-            print("Error Division por cero: \n\t%s" % mensaje)
+                mensaje = "Error: \n\tLa evaluacion de la expresion o variable '%s' no puede ser cero." % var
+            print(mensaje)
+        return None
+
 
     def visitOperSuma(self, ctx):
         izquierda = self.visit(ctx.expMAT(0))
         derecha = self.visit(ctx.expMAT(1))
-        if ctx.operador.type == simplexParser.MAS:
-            return izquierda + derecha
-        return izquierda - derecha
+        if derecha and izquierda:
+            if ctx.operador.type == simplexParser.MAS:
+                return izquierda + derecha
+            return izquierda - derecha
+        return None
 
     def visitOperPotencia(self, ctx):
         izquierda = self.visit(ctx.expMAT(0))
@@ -82,17 +89,21 @@ class simplexExpand(simplexVisitor):
     def visitNumeroMonomio(self, ctx):
         coeficiente = self.visit(ctx.expMAT())
         if coeficiente:
-            return coeficiente, "COEF1"
-        return None
+            return coeficiente, "0C"
+        return coeficiente, None
 
     def visitMonomioMinimo(self, ctx):
         coeficiente = self.visit(ctx.e)
         variable = ctx.variable().getText()
-        return coeficiente, variable
+        if variable and coeficiente:
+            return coeficiente, variable
+        return None, None
 
     def visitMenosMonomio(self, ctx):
         coeficiente, variable = self.visit(ctx.monomio())
-        return -coeficiente, variable
+        if variable and coeficiente:
+            return -coeficiente, variable
+        return None, None
 
     def visitExpFuncion(self, ctx):
         print(ctx.getText())
@@ -112,18 +123,25 @@ class simplexExpand(simplexVisitor):
 
     def visitPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
-        polinomio = {v: c}
-        for monomio in ctx.monomioAdd():
-            c, v = self.visit(monomio)
-            if v in polinomio:
-                polinomio[v] += c
-            else:
-                polinomio[v] = c
-        return polinomio
+        if c and v:
+            polinomio = {v: c}
+            for monomio in ctx.monomioAdd():
+                c, v = self.visit(monomio)
+                if c and v:
+                    if v in polinomio:
+                        polinomio[v] += c
+                    else:
+                        polinomio[v] = c
+                else:
+                    return None
+            return polinomio
+        return None
 
     def visitMonPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
-        return {v: c}
+        if c and v:
+            return {v: c}
+        return None
 
     def visitProblemasExpresados(self, ctx):
         self.visit(ctx.problema())
@@ -147,8 +165,8 @@ class simplexExpand(simplexVisitor):
                 self.X[variable] = 0
                 self.R["0R" + str(self.RCount)] = restriccion
                 self.RCount += 1
-                numero = self.visit(ctx.expMAT())
             else:
+                print("\tEn la restriccion numero %s." % (self.RCount+1))
                 self.resetSelf()
                 return -1
         return 0
@@ -163,6 +181,11 @@ class simplexExpand(simplexVisitor):
                 restriccion[variable] = 1
             else:
                 restriccion[variable] = 0
+            numero = self.visit(ctx.expMAT())
+            if numero:
+                restriccion["0C"] += numero 
+            else:
+                return -1
         return restriccion
 
     def visitDesigualdadesMayorIgual(self, ctx):
@@ -170,6 +193,11 @@ class simplexExpand(simplexVisitor):
         if restriccion != -1:
             variable = "0X" + str(self.RCount)
             restriccion[variable] = -1
+            numero = self.visit(ctx.expMAT())
+            if numero:
+                restriccion["0C"] += numero 
+            else:
+                return -1
         return restriccion
 
     def visitDesigualdadesMenorIgual(self, ctx):
@@ -177,9 +205,13 @@ class simplexExpand(simplexVisitor):
         if restriccion != -1:
             variable = "0X" + str(self.RCount)
             restriccion[variable] = 1
+            numero = self.visit(ctx.expMAT())
+            if numero:
+                restriccion["0C"] += numero 
+            else:
+                return -1
         return restriccion
-    
-    def ma
+
 
     def polinomioRestriccion(self, ctx):
         polinomio = self.visit(ctx.polinomio())
@@ -190,7 +222,8 @@ class simplexExpand(simplexVisitor):
             if monomio in self.X:
                 restriccion[monomio] = polinomio[monomio]
             else:
-                print("Error en la restriccion %s: \n\t La variable '%s' no se encuentra definida en la funcion" % ((self.RCount +1), monomio))
+                print("Error en la restriccion %s: \n\t La variable '%s' no se encuentra definida en la funcion" % (
+                    (self.RCount + 1), monomio))
                 self.resetSelf()
                 return -1
         return restriccion
@@ -208,22 +241,24 @@ class simplexExpand(simplexVisitor):
     def visitFunciones(self, ctx):
         self.visit(ctx.funcionDef())
         polinomio = self.visit(ctx.polinomio())
-        for monomio in polinomio:
-            if monomio in self.X:
-                self.X[monomio] = polinomio[monomio]
-            else:
-                self.resetSelf()
-                print(
-                    "Error en la declaracion de la funcion a maximizar: \n\t La variable '%s' no se encuentra definida en la funcion" % monomio)
-                return -1
-        return 0
+        if polinomio:
+            for monomio in polinomio:
+                if monomio in self.X:
+                    self.X[monomio] = polinomio[monomio]
+                else:
+                    self.resetSelf()
+                    print("Error en la declaracion de la funcion a maximizar: \n\t La variable '%s' no se encuentra definida en la funcion" % monomio)
+                    return -1
+            return 0
+        print("\tEn la declaracion de la funcion a maximizar.")
+        return -1
 
     def visitDefinirFuncion(self, ctx):
         self.X = {}
         for var in ctx.variable():
             variable = self.visit(var)
             self.X[variable] = 0
-        self.X["COEF1"] = 0
+        self.X["0C"] = 0
         return 0
 
     def visitVariables(self, ctx):
