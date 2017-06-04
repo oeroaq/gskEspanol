@@ -1,0 +1,115 @@
+iniciar ::= programa
+
+
+programa ::= expresion* EOF
+
+
+expresion ::= identificador IGUAL expMAT
+          | expMAT 
+          | IMPRIMIR PARABIERTO expresion PARCERRADO 
+          | SALTOLINEA 
+          | problema 
+          | COMENTARIO 
+          
+
+
+problema ::= funcionTrans restriccion restricionVariable RESOLVER SALTOLINEA 
+
+restricionVariable ::= CON DOSPUNTOS SALTOLINEA (desigualdadVariable SALTOLINEA)+
+
+desigualdadVariable ::= variable (MENOR | MAYOR | IGUAL) expMAT
+                    | variable mayorIgual expMAT 
+                    | variable menorIgual expMAT
+                    
+
+restriccion ::= RESTRICCIONES DOSPUNTOS SALTOLINEA (desigualdad SALTOLINEA)+ 
+
+desigualdad ::= polinomio (MENOR | MAYOR | IGUAL) expMAT 
+           | polinomio mayorIgual expMAT 
+           | polinomio menorIgual expMAT 
+           
+
+
+funcionTrans ::= (MAXI | MINI) DOSPUNTOS SALTOLINEA funcion SALTOLINEA 
+
+funcion ::= funcionDef IGUAL polinomio 
+
+funcionDef ::= FUNCION PARABIERTO variable (COMA variable)* PARCERRADO 
+          
+
+polinomio ::= MENOS? monomio monomioAdd+ 
+          | MENOS? monomio 
+          
+
+monomioAdd ::= MAS monomio 
+          | MENOS monomio 
+          
+
+monomio ::= numero variable 
+        | expMAT 
+        
+
+
+expMAT ::= expMAT POTENCIA expMAT
+      | expMAT (MULT | DIV) expMAT 
+      | expMAT (MAS | MENOS) expMAT 
+      | PARABIERTO expMAT PARCERRADO 
+      | entero 
+      | decimal 
+      | identificador 
+      | MENOS expMAT 
+      
+
+variable ::= LETRA+ 
+
+
+identificador ::= LETRA (LETRA | DIGITO | '_')*
+
+
+numero ::= PARABIERTO expMAT PARCERRADO 
+       | decimal 
+       | entero 
+       | 
+       
+
+
+decimal ::= entero PUNTO entero 
+        | decimal exponencial 
+        | entero exponencial 
+        
+exponencial ::= EXPONENCIAL entero 
+            | EXPONENCIAL MENOS entero 
+            | EXPONENCIAL MAS entero 
+            
+
+entero ::= DIGITO+
+
+
+mayorIgual ::= MAYOR IGUAL
+menorIgual ::= MENOR IGUAL
+MAS ::= '+'
+MENOS ::= '-'
+MULT ::= '*'
+DIV ::= '/'
+POTENCIA ::= '**'
+PUNTO ::= '.'
+IGUAL ::= '='
+LETRA ::= [a-zA-Z]
+COMA ::= ','
+SALTOLINEA ::= '\r'? '\n'
+BLANCO ::= [ \t]+ 
+DIGITO ::= [0-9]
+PARABIERTO ::= '('
+PARCERRADO ::= ')'
+MAYOR ::= '>'
+MENOR ::= '<'
+DOSPUNTOS ::= ':'
+EXPONENCIAL ::= [Ee]
+
+IMPRIMIR ::= 'imprimir' | 'imp' 
+MAXI ::= 'maximizar' | 'max'
+MINI ::= 'minimizar' | 'min'
+FUNCION ::= 'funcion'|'fun'
+RESTRICCIONES ::= 'restringir' | 'restr'
+RESOLVER ::= 'resolver' | 'resol' | 'res' 
+CON ::= 'con'
