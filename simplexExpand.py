@@ -245,6 +245,28 @@ class simplexExpand(simplexVisitor):
             return {v: c}
         return None
 
+    def visitMenosPolinomios(self, ctx):
+        c, v = self.visit(ctx.monomio())
+        if c and v:
+            polinomio = {v: -c}
+            for monomio in ctx.monomioAdd():
+                c, v = self.visit(monomio)
+                if c and v:
+                    if v in polinomio:
+                        polinomio[v] += c
+                    else:
+                        polinomio[v] = c
+                else:
+                    return None
+            return polinomio
+        return None
+
+    def visitMenosMonPolinomios(self, ctx):
+        c, v = self.visit(ctx.monomio())
+        if c and v:
+            return {v: -c}
+        return None
+
     def visitProblemasExpresados(self, ctx):
         if self.visit(ctx.problema()) != -1:
             self.resolverSimplex()

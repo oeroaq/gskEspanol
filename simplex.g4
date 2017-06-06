@@ -41,8 +41,10 @@ funcion : funcionDef IGUAL polinomio # funciones;
 funcionDef: FUNCION PARABIERTO variable (COMA variable)* PARCERRADO # definirFuncion
           ;
 
-polinomio : MENOS? monomio monomioAdd+ # polinomios
-          | MENOS? monomio # monPolinomios
+polinomio : monomio monomioAdd+ # polinomios
+          | monomio # monPolinomios
+          | MENOS monomio monomioAdd+ # menosPolinomios
+          | MENOS monomio # menosMonPolinomios
           ;
 
 monomioAdd: MAS monomio # masMonomio

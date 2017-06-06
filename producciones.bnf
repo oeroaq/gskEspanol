@@ -37,8 +37,10 @@ funcion ::= funcionDef IGUAL polinomio
 funcionDef ::= FUNCION PARABIERTO variable (COMA variable)* PARCERRADO 
           
 
-polinomio ::= MENOS? monomio monomioAdd+ 
-          | MENOS? monomio 
+polinomio ::= monomio monomioAdd+ 
+          | monomio
+          | MENOS monomio monomioAdd+ 
+          | MENOS monomio 
           
 
 monomioAdd ::= MAS monomio 
