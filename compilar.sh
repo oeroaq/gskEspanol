@@ -1,2 +1,2 @@
-rm *Lexer.py *Listener.py *.tokens *Parser.py
-antlr4 -Dlanguage=Python3 biologic.g4
+./limpiar.sh
+antlr4 -Dlanguage=Python3 -visitor -no-listener simplex.g4

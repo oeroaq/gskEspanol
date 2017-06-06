@@ -1,2 +1,2 @@
-rm *Lexer.py *Listener.py *.tokens *Parser.py
-rm -R __* .antlr*
+rm *Lexer.py *Visitor.py *.tokens *Parser.py
+rm -R __* #.antlr*
