@@ -58,6 +58,7 @@ expMAT ::= expMAT POTENCIA expMAT
       | decimal 
       | identificador 
       | MENOS expMAT 
+      | trigonometrica 
       
 
 variable ::= LETRA+ 
@@ -71,7 +72,12 @@ numero ::= PARABIERTO expMAT PARCERRADO
        | entero 
        | 
        
-
+trigonometrica := SENO PARABIERTO expMAT PARCERRADO
+               | COSENO PARABIERTO expMAT PARCERRADO
+               | TANGENTE PARABIERTO expMAT PARCERRADO 
+               | EULER PARABIERTO expMAT PARCERRADO 
+               | LOGARITMO PARABIERTO expMAT PARCERRADO 
+               ;
 
 decimal ::= entero PUNTO entero 
         | decimal exponencial 
@@ -113,3 +119,8 @@ FUNCION ::= 'funcion'|'fun'
 RESTRICCIONES ::= 'restringir' | 'restr'
 RESOLVER ::= 'resolver' | 'resol' | 'res' 
 CON ::= 'con'
+SENO ::= 'sen'
+COSENO ::= 'cos'
+TANGENTE ::= 'tan'
+EULER ::= 'exp'
+LOGARITMO ::= 'ln'

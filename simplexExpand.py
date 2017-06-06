@@ -1,6 +1,6 @@
 from simplexVisitor import simplexVisitor
 from simplexParser import simplexParser
-
+import math
 
 class simplexExpand(simplexVisitor):
     def __init__(self):
@@ -91,9 +91,9 @@ class simplexExpand(simplexVisitor):
                 elif self.R[item][columna] == 1:
                     variables[columna] = valor
         
+        self.memory['F'] = variables["0Z"][0]
         print("Funcion:\n\tfuncion (%s) = %s\n"% (", ".join(self.Variables), variables["0Z"][0]))
         print("Vaiables:")
-        self.memory["fun"] = variables["0Z"][0]
         for item in self.Variables:
             if item != "0Z":
                 self.memory[item] = variables[item]
@@ -471,3 +471,27 @@ class simplexExpand(simplexVisitor):
 
     def visitVariables(self, ctx):
         return ctx.getText()
+
+    def visitTrigonometricas(self, ctx):
+        return self.visit(ctx.trigonometrica())
+
+    def visitSenos(self, ctx):
+        numero = self.visit(ctx.expMAT())
+        return math.sin(numero)
+
+    def visitCosenos(self, ctx):
+        numero = self.visit(ctx.expMAT())
+        return math.cos(numero)
+
+    def visitTangentes(self, ctx):
+        numero = self.visit(ctx.expMAT())
+        return math.tan(numero)
+
+    def visitEulerianos(self, ctx):
+        numero = self.visit(ctx.expMAT())
+        return math.exp(numero)
+
+    def visitLogaritmos(self, ctx):
+        numero = self.visit(ctx.expMAT())
+        return math.log(numero)
+    

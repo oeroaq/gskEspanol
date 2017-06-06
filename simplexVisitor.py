@@ -174,6 +174,11 @@ class simplexVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by simplexParser#trigonometricas.
+    def visitTrigonometricas(self, ctx:simplexParser.TrigonometricasContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by simplexParser#operMult.
     def visitOperMult(self, ctx:simplexParser.OperMultContext):
         return self.visitChildren(ctx)
@@ -206,6 +211,21 @@ class simplexVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by simplexParser#noNumero.
     def visitNoNumero(self, ctx:simplexParser.NoNumeroContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by simplexParser#senos.
+    def visitSenos(self, ctx:simplexParser.SenosContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by simplexParser#cosenos.
+    def visitCosenos(self, ctx:simplexParser.CosenosContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by simplexParser#tangentes.
+    def visitTangentes(self, ctx:simplexParser.TangentesContext):
         return self.visitChildren(ctx)
 
 

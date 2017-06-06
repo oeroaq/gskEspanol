@@ -1,5 +1,5 @@
 a = 12
-z= 12**2
+z = sen(4)
 c = 0.00001
 imprimir(a / z )
 min:
@@ -30,9 +30,7 @@ imp(a)
 imp(n)
 imp(b)
 imp(c)
-imp(fun)
-
-
+imp(F)
 
 maximizar:
     fun (a,b,c)= 315a+110b+50c

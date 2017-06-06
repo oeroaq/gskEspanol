@@ -16,7 +16,7 @@ expresion : identificador IGUAL expMAT # asignar
           | COMENTARIO # comentarios
           ;
 
-// Definicion de problema para solucion con el metodo simplex
+// Definicion de problema para solucio+n con el metodo simplex
 problema: funcionTrans restriccion restricionVariable RESOLVER SALTOLINEA # problemas ;
 
 restricionVariable : CON DOSPUNTOS SALTOLINEA (desigualdadVariable SALTOLINEA)+ #restriccionesVariables ;
@@ -62,6 +62,7 @@ expMAT: expMAT POTENCIA expMAT # operPotencia
       | decimal # decimales
       | identificador # identificadores
       | MENOS expMAT # menosExpMAT
+      | trigonometrica # trigonometricas
       ;
 // Variables para expresiones lineales
 variable : LETRA+ # variables;
@@ -75,6 +76,13 @@ numero : PARABIERTO expMAT PARCERRADO # expresionMatematica
        | entero # numerosPol
        | # noNumero
        ;
+
+trigonometrica : SENO PARABIERTO expMAT PARCERRADO # senos
+               | COSENO PARABIERTO expMAT PARCERRADO # cosenos
+               | TANGENTE PARABIERTO expMAT PARCERRADO # tangentes
+               | EULER PARABIERTO expMAT PARCERRADO # eulerianos
+               | LOGARITMO PARABIERTO expMAT PARCERRADO # logaritmos
+               ;
 
 // Expresiones numericas
 decimal : entero PUNTO entero # decimalesPuros
@@ -120,6 +128,11 @@ FUNCION: 'funcion'|'fun';
 RESTRICCIONES: 'restringir' | 'restr';
 RESOLVER: 'resolver' | 'resol' | 'res' ;
 CON: 'con';
+SENO: 'sen';
+COSENO: 'cos';
+TANGENTE: 'tan';
+EULER: 'exp';
+LOGARITMO : 'ln';
 
 //Comentarios
 COMENTARIO : ('#' ~[\r\n]*  | '##' .*? '##') -> skip;
