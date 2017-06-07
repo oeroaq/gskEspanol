@@ -17,18 +17,19 @@ expresion : identificador IGUAL expMAT # asignar
           ;
 
 // Definicion de problema para solucio+n con el metodo simplex
-problema: funcionTrans restriccion restricionVariable RESOLVER SALTOLINEA # problemas ;
+problema: funcionTrans+ restriccion restricionVariable RESOLVER SALTOLINEA # problemas
+        ;
 
 restricionVariable : CON DOSPUNTOS SALTOLINEA (desigualdadVariable SALTOLINEA)+ #restriccionesVariables ;
 
-desigualdadVariable : variable tipo=(MENOR | MAYOR | IGUAL) expMAT # desigualdadesVariables
+desigualdadVariable : variable IGUAL expMAT # desigualdadesVariables
                     | variable mayorIgual expMAT # desigualdadesVariablesMayorIgual
                     | variable menorIgual expMAT # desigualdadesVariablesMenorIgual
                     ;
 
 restriccion : RESTRICCIONES DOSPUNTOS SALTOLINEA (desigualdad SALTOLINEA)+ #restricciones;
 
-desigualdad: polinomio tipo=(MENOR | MAYOR | IGUAL) expMAT # desigualdades
+desigualdad: polinomio IGUAL expMAT # desigualdades
            | polinomio mayorIgual expMAT # desigualdadesMayorIgual
            | polinomio menorIgual expMAT # desigualdadesMenorIgual
            ;
@@ -41,17 +42,17 @@ funcion : funcionDef IGUAL polinomio # funciones;
 funcionDef: FUNCION PARABIERTO variable (COMA variable)* PARCERRADO # definirFuncion
           ;
 
-polinomio : monomio monomioAdd+ # polinomios
-          | monomio # monPolinomios
-          | MENOS monomio monomioAdd+ # menosPolinomios
+polinomio : MENOS monomio monomioAdd+ # menosPolinomios
           | MENOS monomio # menosMonPolinomios
+          | monomio monomioAdd+ # polinomios
+          | monomio # monPolinomios
           ;
 
 monomioAdd: MAS monomio # masMonomio
           | MENOS monomio # menosMonomio
           ;
 
-monomio : e = numero variable # monomioMinimo
+monomio : numero variable # monomioMinimo
         | expMAT # numeroMonomio
         ;
 
