@@ -9,10 +9,13 @@ class simplexExpand(simplexVisitor):
     def __init__(self):
         self.memory = {}
         self.FuncionObjetivoNombre = None
+        self.FuncionObjetivoMAXI = None
         self.FuncionObjetivo = {}
+        self.defFunObjetivo = None
 
     def resetSelf(self):
         self.FuncionObjetivoNombre = None
+        self.FuncionObjetivoMAXI = None
         self.FuncionObjetivo = {}
 
     def visitImprimirExpr(self, ctx):
@@ -133,42 +136,112 @@ class simplexExpand(simplexVisitor):
         return lp
 
     def visitMultiObjetivos(self, ctx):
+        if ctx.operacion.type == simplexParser.MAXI:
+            self.FuncionObjetivoMAXI = "MAXI"
         for problema in ctx.problema():
             self.FuncionObjetivoNombre = self.visit(problema)
             if self.FuncionObjetivoNombre:
-                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"] = self.resolverSimplex(self.FuncionObjetivoNombre)
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"] = self.resolverSimplex(
+                    self.FuncionObjetivoNombre)
                 self.FuncionObjetivoNombre = None
         self.visit(ctx.resolver())
-    
+
     def visitResolverProblemas(self, ctx):
         funciones = list(self.FuncionObjetivo.keys())
         if len(funciones) == 1:
+            print("----------------------------------------------------------------------------------------")
+            print("------------------------------------MODELO UNICO----------------------------------------")
+            print("----------------------------------------------------------------------------------------\n")
             self.FuncionObjetivoNombre = funciones[0]
             if self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"].status == "optimal":
                 print("\nLa solucion que se ha encontrado es optima")
             zz = 0
-            if "MAXI" in self.FuncionObjetivo[self.FuncionObjetivoNombre]:
-                zz = -self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"].objective.value()[0]
+            if self.FuncionObjetivoMAXI:
+                zz = - \
+                    self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"].objective.value()[
+                        0]
             else:
-                zz = self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"].objective.value()[0]
-            print("La funcion objetivo tiene un valor de %.2f"%zz)
+                zz = self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"].objective.value()[
+                    0]
+            print("La funcion objetivo %s tiene un valor de %.2f" %
+                  (self.FuncionObjetivoNombre, zz))
             self.memory[self.FuncionObjetivoNombre] = zz
             for var in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
-                print("La variable %s tiene un valor de  %.2f" %(var,self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][var].value[0]))
+                print("La variable %s tiene un valor de  %.2f" % (
+                    var, self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][var].value[0]))
                 self.memory[var] = self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][var].value[0]
-            self.FuncionObjetivoNombre = None
-            self.FuncionObjetivo = {}
+            print("----------------------------------------------------------------------------------------\n")
 
         else:
+            print("----------------------------------------------------------------------------------------")
+            print("------------------------------MULTIPLES MODELOS-----------------------------------------")
+            print("----------------------------------------------------------------------------------------\n")
+            soluciones = {}
             for funcion in funciones:
-                self.FuncionObjetivoNombre = funcion
-                
+                soluciones[funcion] = {}
+                zz = 0
+                if self.FuncionObjetivoMAXI:
+                    zz = - \
+                        self.FuncionObjetivo[funcion]["Solucion"].objective.value()[
+                            0]
+                else:
+                    zz = self.FuncionObjetivo[funcion]["Solucion"].objective.value()[
+                        0]
+                soluciones[funcion]["Z"] = zz   
+                soluciones[funcion]["EC"] = self.FuncionObjetivo[funcion]["Funcion"]
+                soluciones[funcion]["V"] = {}
+                for var in self.FuncionObjetivo[funcion]["Variables"]:
+                    soluciones[funcion]["V"][var] = self.FuncionObjetivo[funcion]["Variables"][var].value[0]
+                soluciones[funcion]["V"]["0C"] = 1
+            pareto = []
+            hiper = {}
+            for funcion in funciones:
+                hiper[funcion] = {}
+                for fun in funciones:
+                    hiper[funcion]["0S" + fun] = self.evaluar(
+                        soluciones[funcion]["EC"], soluciones[fun]["V"])
+            for f in funciones:
+                meig = True
+                for funcion in hiper:
+                    mi = True
+                    m = False
+                    for fun in hiper[funcion]:
+                        if self.FuncionObjetivoMAXI:
+                            mi = mi and (hiper[f][fun] >= hiper[funcion][fun])
+                            m = m or (hiper[f][fun] > hiper[funcion][fun])
+                        else:
+                            mi = mi and (hiper[f][fun] <= hiper[funcion][fun])
+                            m = m or (hiper[f][fun] < hiper[funcion][fun])
+                    meig = meig and mi
+                if meig and m:
+                    pareto.append(f)
+            print("La optimizacion esta dada por la funcion:")
+            for fun in pareto:
+                print("\t'%s' = %.2f con las variables:" %
+                      (fun, soluciones[fun]["Z"]))
+                for var in soluciones[fun]["V"]:
+                    if var != '0C':
+                        print("\t\t'%s' = %.2f" % (var, soluciones[fun]["V"][var]))
+            if self.FuncionObjetivoMAXI:
+                print("\tcuya solucion maximiza a todas las funciones objetivo.")
+            else:
+                print("\tcuya solucion minimiza a todas las funciones objetivo.")
+            print("----------------------------------------------------------------------------------------\n")
+        self.FuncionObjetivoNombre = None
+        self.FuncionObjetivo = {}
 
+    def evaluar(self, funcion, parametros):
+        resultado = 0
+        for variable in parametros:
+            if variable in funcion:
+                resultado += funcion[variable] * parametros[variable]
+        return resultado
 
     def visitProblemas(self, ctx):
         self.FuncionObjetivoNombre = self.visit(ctx.funcionTrans())
         if self.FuncionObjetivoNombre:
-            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Resticciones"] = []
+            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Resticciones"] = [
+            ]
             restriccion = self.visit(ctx.restriccion())
             if restriccion:
                 self.FuncionObjetivo[self.FuncionObjetivoNombre]["Resticciones"] = restriccion
@@ -254,7 +327,7 @@ class simplexExpand(simplexVisitor):
         if restriccion or restriccion == 0:
             numero = self.visit(ctx.expMAT())
             if numero or numero == 0:
-                if "MAXI" in self.FuncionObjetivo[self.FuncionObjetivoNombre]:
+                if self.FuncionObjetivoMAXI:
                     return (-restriccion) <= numero
                 return restriccion >= numero
             else:
@@ -280,9 +353,8 @@ class simplexExpand(simplexVisitor):
     def visitFuncionTransf(self, ctx):
         FObjetivo = self.visit(ctx.funcion())
         if FObjetivo:
-            if ctx.operacion.type == simplexParser.MAXI:
+            if self.FuncionObjetivoMAXI:
                 self.FuncionObjetivo[self.FuncionObjetivoNombre]["FuncionObjetivo"] = -FObjetivo
-                self.FuncionObjetivo[self.FuncionObjetivoNombre]["MAXI"] = "MAXI"
             else:
                 self.FuncionObjetivo[self.FuncionObjetivoNombre]["FuncionObjetivo"] = FObjetivo
             return self.FuncionObjetivoNombre
@@ -291,30 +363,39 @@ class simplexExpand(simplexVisitor):
 
     def visitFunciones(self, ctx):
         self.visit(ctx.funcionDef())
+        self.defFunObjetivo = True
         polinomio = self.visit(ctx.polinomio())
         if polinomio or polinomio == 0:
+            self.defFunObjetivo = None
             return polinomio
-        print("\tEn la declaracion de la funcion a maximizar.")
+        print("\tEn la declaracion de la funcion.")
         return None
 
     def visitDefinirFuncion(self, ctx):
         self.FuncionObjetivoNombre = self.visit(ctx.nombrefuncion())
         if self.FuncionObjetivoNombre:
             if self.FuncionObjetivoNombre in self.FuncionObjetivo:
-                print("Advertencia:\n\tLa funcion '%s' ya se habia definido anteriormente, se sobreescribe.\n"%self.FuncionObjetivoNombre)
-            self.FuncionObjetivo[self.FuncionObjetivoNombre]={}
-            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]={}
+                print("Advertencia:\n\tLa funcion '%s' ya se habia definido anteriormente, se sobreescribe.\n" %
+                      self.FuncionObjetivoNombre)
+            self.FuncionObjetivo[self.FuncionObjetivoNombre] = {}
+            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"] = {}
             for var in ctx.variable():
                 v = self.visit(var)
-                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v] = variable(1, v)
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v] = variable(
+                    1, v)
             return self.FuncionObjetivoNombre
         return None
 
     def visitPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
         if c and v:
+            if self.defFunObjetivo:
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"] = {
+                }
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"][v] = c
             if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
-                polinomio = c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
+                polinomio = c * \
+                    self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
             elif v == "0C":
                 polinomio = c
             else:
@@ -322,8 +403,14 @@ class simplexExpand(simplexVisitor):
             for monomio in ctx.monomioAdd():
                 c, v = self.visit(monomio)
                 if c and v:
+                    if self.defFunObjetivo:
+                        if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"]:
+                            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"][v] += c
+                        else:
+                            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"][v] = c
                     if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
-                        polinomio += c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
+                        polinomio += c * \
+                            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
                     elif v == "0C":
                         polinomio += c
                     else:
@@ -336,6 +423,10 @@ class simplexExpand(simplexVisitor):
     def visitMonPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
         if c and v:
+            if self.defFunObjetivo:
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"] = {
+                }
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"][v] = c
             if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
                 return c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
             elif v == "0C":
@@ -345,8 +436,13 @@ class simplexExpand(simplexVisitor):
     def visitMenosPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
         if c and v:
+            if self.defFunObjetivo:
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"] = {
+                }
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"][v] = -c
             if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
-                polinomio = -c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
+                polinomio = -c * \
+                    self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
             elif v == "0C":
                 polinomio = -c
             else:
@@ -354,8 +450,14 @@ class simplexExpand(simplexVisitor):
             for monomio in ctx.monomioAdd():
                 c, v = self.visit(monomio)
                 if c and v:
+                    if self.defFunObjetivo:
+                        if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"]:
+                            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"][v] += c
+                        else:
+                            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"][v] = c
                     if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
-                        polinomio += c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
+                        polinomio += c * \
+                            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
                     elif v == "0C":
                         polinomio += c
                     else:
@@ -368,6 +470,10 @@ class simplexExpand(simplexVisitor):
     def visitMenosMonPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
         if c and v:
+            if self.defFunObjetivo:
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"] = {
+                }
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Funcion"][v] = -c
             if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
                 return -c
             elif v == "0C":

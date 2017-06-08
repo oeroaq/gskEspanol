@@ -17,7 +17,7 @@ expresion : identificador IGUAL expMAT # asignar
           ;
 
 // Definicion de problema para solucio+n con el metodo simplex
-multiobjetivo: problema+ resolver SALTOLINEA+ # multiObjetivos
+multiobjetivo: operacion = (MAXI | MINI) DOSPUNTOS SALTOLINEA+ problema+ resolver SALTOLINEA+ # multiObjetivos
              ;
 
 resolver: RESOLVER # resolverProblemas;
@@ -41,7 +41,7 @@ desigualdad: polinomio IGUAL expMAT # desigualdades
            ;
 
 
-funcionTrans: operacion = (MAXI | MINI) DOSPUNTOS SALTOLINEA+ funcion SALTOLINEA+ #funcionTransf;
+funcionTrans: funcion SALTOLINEA+ #funcionTransf;
 
 funcion : funcionDef IGUAL polinomio # funciones;
 
