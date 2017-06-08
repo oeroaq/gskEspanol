@@ -12,22 +12,28 @@ expresion : identificador IGUAL expMAT # asignar
           | expMAT # calcular
           | IMPRIMIR PARABIERTO expresion PARCERRADO # imprimirExpr
           | SALTOLINEA # saltar
-          | problema # problemasExpresados
+          | multiobjetivo # problemasExpresados
           | COMENTARIO # comentarios
           ;
 
 // Definicion de problema para solucio+n con el metodo simplex
-problema: funcionTrans+ restriccion restricionVariable RESOLVER SALTOLINEA # problemas
+multiobjetivo: problema+ resolver SALTOLINEA+ # multiObjetivos
+             ;
+
+resolver: RESOLVER # resolverProblemas;
+
+problema: funcionTrans restriccion restricionVariable # problemas
         ;
 
-restricionVariable : CON DOSPUNTOS SALTOLINEA (desigualdadVariable SALTOLINEA)+ #restriccionesVariables ;
+
+restricionVariable : CON DOSPUNTOS SALTOLINEA+ (desigualdadVariable SALTOLINEA+)+ #restriccionesVariables ;
 
 desigualdadVariable : variable IGUAL expMAT # desigualdadesVariables
                     | variable mayorIgual expMAT # desigualdadesVariablesMayorIgual
                     | variable menorIgual expMAT # desigualdadesVariablesMenorIgual
                     ;
 
-restriccion : RESTRICCIONES DOSPUNTOS SALTOLINEA (desigualdad SALTOLINEA)+ #restricciones;
+restriccion : RESTRICCIONES DOSPUNTOS SALTOLINEA+ (desigualdad SALTOLINEA+)+ #restricciones;
 
 desigualdad: polinomio IGUAL expMAT # desigualdades
            | polinomio mayorIgual expMAT # desigualdadesMayorIgual
@@ -35,12 +41,13 @@ desigualdad: polinomio IGUAL expMAT # desigualdades
            ;
 
 
-funcionTrans: operacion = (MAXI | MINI) DOSPUNTOS SALTOLINEA funcion SALTOLINEA #funcionTransf;
+funcionTrans: operacion = (MAXI | MINI) DOSPUNTOS SALTOLINEA+ funcion SALTOLINEA+ #funcionTransf;
 
 funcion : funcionDef IGUAL polinomio # funciones;
 
-funcionDef: FUNCION PARABIERTO variable (COMA variable)* PARCERRADO # definirFuncion
+funcionDef: nombrefuncion PARABIERTO variable (COMA variable)* PARCERRADO # definirFuncion
           ;
+nombrefuncion: variable;
 
 polinomio : MENOS monomio monomioAdd+ # menosPolinomios
           | MENOS monomio # menosMonPolinomios
@@ -127,7 +134,6 @@ EXPONENCIAL: [Ee];
 IMPRIMIR : 'imprimir' | 'imp' ;
 MAXI : 'maximizar' | 'max';
 MINI : 'minimizar' | 'min';
-FUNCION: 'funcion'|'fun';
 RESTRICCIONES: 'restringir' | 'restr';
 RESOLVER: 'resolver' | 'resol' | 'res' ;
 CON: 'con';

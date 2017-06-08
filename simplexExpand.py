@@ -8,18 +8,12 @@ import math
 class simplexExpand(simplexVisitor):
     def __init__(self):
         self.memory = {}
-        self.VariablesFuncionesFunciones = {}
-        self.FuncionObjetivoContador = 0
+        self.FuncionObjetivoNombre = None
         self.FuncionObjetivo = {}
-        self.OperacionMaxMin = None
-        self.Restricciones = []
 
     def resetSelf(self):
-        self.VariablesFunciones = {}
-        self.FuncionObjetivoContador = 0
+        self.FuncionObjetivoNombre = None
         self.FuncionObjetivo = {}
-        self.OperacionMaxMin = None
-        self.Restricciones = []
 
     def visitImprimirExpr(self, ctx):
         valor = self.visit(ctx.expresion())
@@ -129,31 +123,59 @@ class simplexExpand(simplexVisitor):
         return 1
 
     def visitProblemasExpresados(self, ctx):
-        if self.visit(ctx.problema()):
-            self.resolverSimplex()
+        self.visit(ctx.multiobjetivo())
 
-    def resolverSimplex(self):
+    def resolverSimplex(self, funcionObjetivo):
         solvers.options['show_progress'] = False
-        lp = op(self.FuncionObjetivo[0], self.Restricciones)
+        lp = op(self.FuncionObjetivo[funcionObjetivo]["FuncionObjetivo"],
+                self.FuncionObjetivo[funcionObjetivo]["Resticciones"])
         lp.solve()
-        if lp.status == "optimal":
-            print("\nLa solucion que se ha encontrado es optima")
-        zz = 0
-        if self.OperacionMaxMin == simplexParser.MAXI:
-            zz = -lp.objective.value()[0]
+        return lp
+
+    def visitMultiObjetivos(self, ctx):
+        for problema in ctx.problema():
+            self.FuncionObjetivoNombre = self.visit(problema)
+            if self.FuncionObjetivoNombre:
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"] = self.resolverSimplex(self.FuncionObjetivoNombre)
+                self.FuncionObjetivoNombre = None
+        self.visit(ctx.resolver())
+    
+    def visitResolverProblemas(self, ctx):
+        funciones = list(self.FuncionObjetivo.keys())
+        if len(funciones) == 1:
+            self.FuncionObjetivoNombre = funciones[0]
+            if self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"].status == "optimal":
+                print("\nLa solucion que se ha encontrado es optima")
+            zz = 0
+            if "MAXI" in self.FuncionObjetivo[self.FuncionObjetivoNombre]:
+                zz = -self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"].objective.value()[0]
+            else:
+                zz = self.FuncionObjetivo[self.FuncionObjetivoNombre]["Solucion"].objective.value()[0]
+            print("La funcion objetivo tiene un valor de %.2f"%zz)
+            self.memory[self.FuncionObjetivoNombre] = zz
+            for var in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
+                print("La variable %s tiene un valor de  %.2f" %(var,self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][var].value[0]))
+                self.memory[var] = self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][var].value[0]
+            self.FuncionObjetivoNombre = None
+            self.FuncionObjetivo = {}
+
         else:
-            zz = lp.objective.value()[0]
-        print("La funcion objetivo tiene un valor de %.2f"%zz)
-        for var in self.VariablesFunciones:
-            print("La variable %s tiene un valor de  %.2f" %(var,self.VariablesFunciones[var].value[0]))
+            for funcion in funciones:
+                self.FuncionObjetivoNombre = funcion
+                
+
 
     def visitProblemas(self, ctx):
-        for FuncionObjetivo in ctx.funcionTrans():
-            if not self.visit(FuncionObjetivo):
-                return None
-        if self.visit(ctx.restriccion()):
-            if self.visit(ctx.restricionVariable()):
-                return 1
+        self.FuncionObjetivoNombre = self.visit(ctx.funcionTrans())
+        if self.FuncionObjetivoNombre:
+            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Resticciones"] = []
+            restriccion = self.visit(ctx.restriccion())
+            if restriccion:
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Resticciones"] = restriccion
+            restriccion = self.visit(ctx.restricionVariable())
+            if restriccion:
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Resticciones"] += restriccion
+            return self.FuncionObjetivoNombre
         return None
 
     '''
@@ -161,21 +183,22 @@ class simplexExpand(simplexVisitor):
     '''
 
     def visitRestriccionesVariables(self, ctx):
+        Restricciones = []
         for noigualdad in ctx.desigualdadVariable():
             restriccion = self.visit(noigualdad)
             if restriccion:
-                self.Restricciones.append(restriccion)
+                Restricciones.append(restriccion)
             else:
                 self.resetSelf()
                 return None
-        return 1
+        return Restricciones
 
     def visitDesigualdadesVariables(self, ctx):
         var = self.visit(ctx.variable())
-        if var in self.VariablesFunciones:
+        if var in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
             numero = self.visit(ctx.expMAT())
             if numero or numero == 0:
-                return self.VariablesFunciones[var] == numero
+                return self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][var] == numero
             else:
                 print("\tEn la condicion %s." % (ctx.getText()))
                 return None
@@ -183,10 +206,10 @@ class simplexExpand(simplexVisitor):
 
     def visitDesigualdadesVariablesMayorIgual(self, ctx):
         var = self.visit(ctx.variable())
-        if var in self.VariablesFunciones:
+        if var in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
             numero = self.visit(ctx.expMAT())
             if numero or numero == 0:
-                restriccion = self.VariablesFunciones[var] >= numero
+                restriccion = self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][var] >= numero
                 return restriccion
             else:
                 print("\tEn la condicion %s." % (ctx.getText()))
@@ -195,24 +218,25 @@ class simplexExpand(simplexVisitor):
 
     def visitDesigualdadesVariablesMenorIgual(self, ctx):
         var = self.visit(ctx.variable())
-        if var in self.VariablesFunciones:
+        if var in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
             numero = self.visit(ctx.expMAT())
             if numero or numero == 0:
-                return self.VariablesFunciones[var] <= numero
+                return self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][var] <= numero
             else:
                 print("\tEn la condicion %s." % (ctx.getText()))
                 return None
         return None
 
     def visitRestricciones(self, ctx):
+        Restricciones = []
         for noigualdad in ctx.desigualdad():
             restriccion = self.visit(noigualdad)
             if restriccion:
-                self.Restricciones.append(restriccion)
+                Restricciones.append(restriccion)
             else:
                 self.resetSelf()
                 return None
-        return 1
+        return Restricciones
 
     def visitDesigualdades(self, ctx):
         restriccion = self.visit(ctx.polinomio())
@@ -230,7 +254,7 @@ class simplexExpand(simplexVisitor):
         if restriccion or restriccion == 0:
             numero = self.visit(ctx.expMAT())
             if numero or numero == 0:
-                if self.OperacionMaxMin == simplexParser.MAXI:
+                if "MAXI" in self.FuncionObjetivo[self.FuncionObjetivoNombre]:
                     return (-restriccion) <= numero
                 return restriccion >= numero
             else:
@@ -256,13 +280,12 @@ class simplexExpand(simplexVisitor):
     def visitFuncionTransf(self, ctx):
         FObjetivo = self.visit(ctx.funcion())
         if FObjetivo:
-            self.OperacionMaxMin = ctx.operacion.type
-            if self.OperacionMaxMin == simplexParser.MAXI:
-                self.FuncionObjetivo[self.FuncionObjetivoContador] = -FObjetivo
+            if ctx.operacion.type == simplexParser.MAXI:
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["FuncionObjetivo"] = -FObjetivo
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["MAXI"] = "MAXI"
             else:
-                self.FuncionObjetivo[self.FuncionObjetivoContador] = FObjetivo
-            self.FuncionObjetivoContador += 1
-            return 1
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["FuncionObjetivo"] = FObjetivo
+            return self.FuncionObjetivoNombre
         self.resetSelf()
         return None
 
@@ -275,17 +298,23 @@ class simplexExpand(simplexVisitor):
         return None
 
     def visitDefinirFuncion(self, ctx):
-        self.resetSelf()
-        for var in ctx.variable():
-            v = self.visit(var)
-            self.VariablesFunciones[v] = variable(1, v)
-        return 0
+        self.FuncionObjetivoNombre = self.visit(ctx.nombrefuncion())
+        if self.FuncionObjetivoNombre:
+            if self.FuncionObjetivoNombre in self.FuncionObjetivo:
+                print("Advertencia:\n\tLa funcion '%s' ya se habia definido anteriormente, se sobreescribe.\n"%self.FuncionObjetivoNombre)
+            self.FuncionObjetivo[self.FuncionObjetivoNombre]={}
+            self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]={}
+            for var in ctx.variable():
+                v = self.visit(var)
+                self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v] = variable(1, v)
+            return self.FuncionObjetivoNombre
+        return None
 
     def visitPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
         if c and v:
-            if v in self.VariablesFunciones:
-                polinomio = c * self.VariablesFunciones[v]
+            if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
+                polinomio = c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
             elif v == "0C":
                 polinomio = c
             else:
@@ -293,8 +322,8 @@ class simplexExpand(simplexVisitor):
             for monomio in ctx.monomioAdd():
                 c, v = self.visit(monomio)
                 if c and v:
-                    if v in self.VariablesFunciones:
-                        polinomio += c * self.VariablesFunciones[v]
+                    if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
+                        polinomio += c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
                     elif v == "0C":
                         polinomio += c
                     else:
@@ -307,8 +336,8 @@ class simplexExpand(simplexVisitor):
     def visitMonPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
         if c and v:
-            if v in self.VariablesFunciones:
-                return c * self.VariablesFunciones[v]
+            if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
+                return c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
             elif v == "0C":
                 return c
         return None
@@ -316,8 +345,8 @@ class simplexExpand(simplexVisitor):
     def visitMenosPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
         if c and v:
-            if v in self.VariablesFunciones:
-                polinomio = -c * self.VariablesFunciones[v]
+            if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
+                polinomio = -c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
             elif v == "0C":
                 polinomio = -c
             else:
@@ -325,8 +354,8 @@ class simplexExpand(simplexVisitor):
             for monomio in ctx.monomioAdd():
                 c, v = self.visit(monomio)
                 if c and v:
-                    if v in self.VariablesFunciones:
-                        polinomio += c * self.VariablesFunciones[v]
+                    if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
+                        polinomio += c * self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"][v]
                     elif v == "0C":
                         polinomio += c
                     else:
@@ -339,7 +368,7 @@ class simplexExpand(simplexVisitor):
     def visitMenosMonPolinomios(self, ctx):
         c, v = self.visit(ctx.monomio())
         if c and v:
-            if v in self.VariablesFunciones:
+            if v in self.FuncionObjetivo[self.FuncionObjetivoNombre]["Variables"]:
                 return -c
             elif v == "0C":
                 return -c

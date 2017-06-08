@@ -49,6 +49,16 @@ class simplexVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by simplexParser#multiObjetivos.
+    def visitMultiObjetivos(self, ctx:simplexParser.MultiObjetivosContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by simplexParser#resolverProblemas.
+    def visitResolverProblemas(self, ctx:simplexParser.ResolverProblemasContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by simplexParser#problemas.
     def visitProblemas(self, ctx:simplexParser.ProblemasContext):
         return self.visitChildren(ctx)
@@ -106,6 +116,11 @@ class simplexVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by simplexParser#definirFuncion.
     def visitDefinirFuncion(self, ctx:simplexParser.DefinirFuncionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by simplexParser#nombrefuncion.
+    def visitNombrefuncion(self, ctx:simplexParser.NombrefuncionContext):
         return self.visitChildren(ctx)
 
 
